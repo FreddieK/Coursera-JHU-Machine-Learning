@@ -21,7 +21,7 @@ library(magrittr)
 library(anytime)
 
 set.seed(1337)
-```
+``` 
 
 
 ## Executive summary
@@ -31,7 +31,7 @@ The final ensemble model was built using three different models, Random Forest, 
 
 
 ## Data analysis
-When exploring the data, it's clear that for very many features in the set are very sparse and contains very little data. In order to reduce the number of features and the complexity, we can thus look at removing unneccessary features that doesn't contain much data.
+When exploring the data, it's clear that for very many features in the set are very sparse and contains very little data. In order to reduce the number of features and the complexity, we can thus look at removing unneccessary features that doesn't contain much data. Here a chart showing the share of rows with actual data per column;
 ```{r data-analysis}
 rawDataSet <- read_csv('./data/pml-training.csv')
 
@@ -40,9 +40,9 @@ plot(hasDataRate)
 
 ```
 
-Based on this graph we can set a low threshold for 10% of the rows filled.
+Based on this graph we can set a low threshold for 10% of the rows filled to remove superfluous predictors.
 
-Further, when looking at the time axis, the distribution has stayed the same over time so we can remove these columns as well from the model to simplify.
+Further, when looking at the time axis, the distribution has stayed the same over time which means time shouldn't be useful for predictions. Thus we can remove the timestamp related columns as well in order to simplify.
 
 ```{r data-analysis2}
 classOverTime <- rawDataSet %>% dplyr::select(raw_timestamp_part_1, classe) %>% as.data.frame()
@@ -66,7 +66,7 @@ fullSet <- rawDataSet
 has_data <- function(x) { sum(!is.na(x))/length(x) > 0.1 }
 fullSet %<>% select_if(has_data)
 
-# Remove row number and time stamps as they shouldn't matter for classification
+# Remove row number and timestamps as they shouldn't matter for classification
 fullSet %<>% dplyr::select(-X1, -raw_timestamp_part_1, -raw_timestamp_part_2, -cvtd_timestamp)
 
 fullSet$user_name %<>% factor()
