@@ -24,14 +24,10 @@ set.seed(1337)
 ```
 
 
-## Project Outline
+## Executive summary
 Classify how a workout excercise was performed based on sensor data and use the trained model to predict classification of 20 additional rows.
 
-* You should create a report describing how you built your model, 
-* how you used cross validation, 
-* What you think the expected out of sample error is, and why you made the choices you did. 
-
-- a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
+The final ensemble model was built using three different models, Random Forest, GBM and XGBoost and succesfully classified the validation set.
 
 
 ## Data analysis
@@ -47,6 +43,7 @@ plot(hasDataRate)
 Based on this graph we can set a low threshold for 10% of the rows filled.
 
 Further, when looking at the time axis, the distribution has stayed the same over time so we can remove these columns as well from the model to simplify.
+
 ```{r data-analysis2}
 classOverTime <- rawDataSet %>% dplyr::select(raw_timestamp_part_1, classe) %>% as.data.frame()
 classOverTime$raw_timestamp_part_1 %<>% anytime() %>% round("day") %>% as.POSIXct()
@@ -92,7 +89,9 @@ if(!file.exists("./models/trainingImputed.rds")){
 ## Building Models
 I explored a few different alghorithms on a smaller set of data including QDA and GLM but settled on using Random Forest and GBM as those were the main classification alghorithms covered in the course. As a final one, I decided to include xgbTree as that is considered one of the best currently available for many usecases.
 
-Random Forest and xgbTree worked very well with default settings, but GBM required some tuning as its default number of trees and interaction depths weren't finegrained enough.
+Random Forest and xgbTree worked very well with default settings, but GBM required some tuning where I upped the grid search for interaction depth to a maximum of 5, and the max amount of trees to 500, which improved results.
+
+For cross validation, I used the default 25 iterations boosting for rf and xgbTree, but changed to a 10 fold cross validation repeated 3 times for the GBM to decrease the overfitting due to increased number of trees.
 
 ```{r building-models}
 # Random Forest
@@ -176,7 +175,8 @@ colnames(cfm.combined.output) <- c('Ensemble Model')
 knitr::kable(t(cfm.combined.output))
 ```
 
-When looking at the models feature importance, it is clearly blending the different models together. This seemed to work well for the submitted quizz test data too, which got 100% accuracy.
+When looking at the models feature importance, it is clearly blending the different models together.
+
 ```{r feature-blending}
 varImp.combination <- varImp(combination.model)
 featureImportance <- varImp.combination$importance %>% 
@@ -185,6 +185,10 @@ featureImportance <- varImp.combination$importance %>%
 colnames(featureImportance) <- c('Feature', 'Importance')
 knitr::kable(featureImportance)
 ```
+
+For the same training subjects, the excercises shouldn't change much over time, so the out of sample error should be small. If a new user subject was added though, it's possible that their way of performing the excercice would differ which would create a larger out of sample error.
+
+Since the users were the same in the final validation set though, I didn't get to a chance to see whether this is the case. The built model worked well for the submitted quizz test data too, and had 100% accuracy.
 
 ```{r quizz-predictions}
 predictionSet <- read_csv('./data/pml-testing.csv')
